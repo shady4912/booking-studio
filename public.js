@@ -1,5 +1,6 @@
 import { calculatePreviewQuote, formatMoney } from "./pricing.mjs";
 import { collectBookingAnswers } from "./booking-form.mjs";
+import { formatAddressFeature } from "./address-search.mjs";
 
 const root = document.querySelector("#public-content");
 const slug = decodeURIComponent(location.pathname.slice("/book/".length));
@@ -74,6 +75,196 @@ function buildField(field) {
   wrapper.append(label, control);
   if (field.help) wrapper.append(element("small", "public-help", field.help));
   return wrapper;
+}
+
+function fieldRole(field) {
+  const value = `${field.id} ${field.label}`.toLowerCase().replace(/[^a-z0-9]+/g, " ");
+  if (/\b(street|address|location)\b/.test(value)) return "address";
+  if (/\b(city|town|municipality)\b/.test(value)) return "city";
+  if (/\b(zip|postal|postcode)\b/.test(value)) return "postcode";
+  return "";
+}
+
+function setupAddressAutocomplete(addressInput, cityInput, postcodeInput) {
+  if (!addressInput || addressInput.tagName !== "INPUT" || addressInput.type !== "text") return;
+
+  const wrapper = addressInput.closest(".public-field");
+  if (!wrapper) return;
+  const listId = `${addressInput.id}-suggestions`;
+  const list = element("div", "address-suggestions");
+  list.id = listId;
+  list.setAttribute("role", "listbox");
+  list.hidden = true;
+  const status = element("div", "address-search-status");
+  status.setAttribute("role", "status");
+  const attribution = document.createElement("small");
+  attribution.className = "address-attribution";
+  attribution.append(document.createTextNode("Address suggestions by "));
+  const photonLink = document.createElement("a");
+  photonLink.href = "https://photon.komoot.io/";
+  photonLink.target = "_blank";
+  photonLink.rel = "noopener noreferrer";
+  photonLink.textContent = "Photon";
+  attribution.append(photonLink, document.createTextNode(" · © "));
+  const osmLink = document.createElement("a");
+  osmLink.href = "https://www.openstreetmap.org/copyright";
+  osmLink.target = "_blank";
+  osmLink.rel = "noopener noreferrer";
+  osmLink.textContent = "OpenStreetMap contributors";
+  attribution.append(osmLink);
+  const privacyNote = element(
+    "small",
+    "address-privacy-note",
+    "Search text is sent to Photon for suggestions. You can also enter the address manually.",
+  );
+  const help = wrapper.querySelector(".public-help");
+  wrapper.insertBefore(list, help || null);
+  wrapper.insertBefore(status, help || null);
+  wrapper.insertBefore(attribution, help || null);
+  wrapper.insertBefore(privacyNote, help || null);
+  addressInput.setAttribute("role", "combobox");
+  addressInput.setAttribute("aria-autocomplete", "list");
+  addressInput.setAttribute("aria-controls", listId);
+  addressInput.setAttribute("aria-expanded", "false");
+  addressInput.autocomplete = "off";
+
+  let debounceTimer;
+  let activeRequest;
+  let requestSequence = 0;
+  let activeIndex = -1;
+  let selectedAddress = "";
+  let options = [];
+
+  const closeList = () => {
+    list.hidden = true;
+    list.replaceChildren();
+    status.textContent = "";
+    addressInput.setAttribute("aria-expanded", "false");
+    addressInput.removeAttribute("aria-activedescendant");
+    activeIndex = -1;
+    options = [];
+  };
+
+  const selectSuggestion = (suggestion) => {
+    selectedAddress = suggestion.address;
+    addressInput.value = suggestion.address;
+    if (cityInput && suggestion.city) cityInput.value = suggestion.city;
+    if (postcodeInput && suggestion.postcode) postcodeInput.value = suggestion.postcode;
+    closeList();
+    addressInput.dispatchEvent(new Event("input", { bubbles: true }));
+    addressInput.dispatchEvent(new Event("change", { bubbles: true }));
+    cityInput?.dispatchEvent(new Event("input", { bubbles: true }));
+    cityInput?.dispatchEvent(new Event("change", { bubbles: true }));
+    postcodeInput?.dispatchEvent(new Event("input", { bubbles: true }));
+    postcodeInput?.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+
+  const setActiveOption = (index) => {
+    if (!options.length) return;
+    activeIndex = (index + options.length) % options.length;
+    for (const [optionIndex, option] of [...list.children].entries()) {
+      const active = optionIndex === activeIndex;
+      option.setAttribute("aria-selected", String(active));
+      option.classList.toggle("active", active);
+    }
+    addressInput.setAttribute("aria-activedescendant", list.children[activeIndex].id);
+    list.children[activeIndex].scrollIntoView?.({ block: "nearest" });
+  };
+
+  const search = async (query, sequence) => {
+    activeRequest?.abort();
+    activeRequest = new AbortController();
+    status.textContent = "Searching addresses…";
+    list.hidden = false;
+    addressInput.setAttribute("aria-expanded", "true");
+    const url = new URL("https://photon.komoot.io/api/");
+    url.searchParams.set("q", query);
+    url.searchParams.set("limit", "5");
+    url.searchParams.set("lang", navigator.language?.split("-")[0] || "en");
+    try {
+      const response = await fetch(url, {
+        headers: { Accept: "application/json" },
+        signal: activeRequest.signal,
+      });
+      if (!response.ok) throw new Error(`Address search failed (HTTP ${response.status}).`);
+      const result = await response.json();
+      if (sequence !== requestSequence) return;
+      options = (result.features || []).map(formatAddressFeature).filter(Boolean);
+      list.replaceChildren();
+      if (!options.length) {
+        status.textContent = "No matching addresses found. You can enter the address manually.";
+        return;
+      }
+      status.textContent = "";
+      for (const [index, suggestion] of options.entries()) {
+        const option = element("button", "address-suggestion");
+        option.type = "button";
+        option.id = `${listId}-option-${index}`;
+        option.setAttribute("role", "option");
+        option.setAttribute("aria-selected", "false");
+        const title = element("span", "address-suggestion-title", suggestion.title);
+        const details = element("small", "address-suggestion-details", suggestion.details);
+        option.append(title, details);
+        option.addEventListener("pointerdown", (event) => event.preventDefault());
+        option.addEventListener("click", () => selectSuggestion(suggestion));
+        list.append(option);
+      }
+      list.hidden = false;
+      addressInput.setAttribute("aria-expanded", "true");
+    } catch (error) {
+      if (error.name === "AbortError" || sequence !== requestSequence) return;
+      console.error("Address autocomplete request failed.", error);
+      list.replaceChildren();
+      status.textContent = "Address suggestions are temporarily unavailable. You can enter the address manually.";
+      list.hidden = false;
+      addressInput.setAttribute("aria-expanded", "true");
+    }
+  };
+
+  addressInput.addEventListener("input", () => {
+    if (selectedAddress && addressInput.value === selectedAddress) {
+      clearTimeout(debounceTimer);
+      activeRequest?.abort();
+      closeList();
+      return;
+    }
+    if (selectedAddress && addressInput.value !== selectedAddress) {
+      selectedAddress = "";
+      if (cityInput) cityInput.value = "";
+      if (postcodeInput) postcodeInput.value = "";
+    }
+    clearTimeout(debounceTimer);
+    activeRequest?.abort();
+    const query = addressInput.value.trim();
+    const sequence = ++requestSequence;
+    if (query.length < 3) {
+      closeList();
+      return;
+    }
+    debounceTimer = setTimeout(() => search(query, sequence), 300);
+  });
+
+  addressInput.addEventListener("keydown", (event) => {
+    if (list.hidden) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveOption(activeIndex + 1);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveOption(activeIndex < 0 ? options.length - 1 : activeIndex - 1);
+    } else if (event.key === "Enter" && activeIndex >= 0) {
+      event.preventDefault();
+      selectSuggestion(options[activeIndex]);
+    } else if (event.key === "Escape") {
+      closeList();
+    }
+  });
+
+  addressInput.addEventListener("focusout", () => {
+    setTimeout(() => {
+      if (!wrapper.contains(document.activeElement)) closeList();
+    }, 0);
+  });
 }
 
 function currentAnswers(form) {
@@ -260,6 +451,7 @@ function renderPage() {
   const availability = element("div", "public-schedule");
   schedule.append(availability);
   let firstFieldset = null;
+  const fieldControls = new Map();
   project.sections.forEach((section) => {
     if (section.type === "schedule") {
       form.append(schedule);
@@ -270,11 +462,24 @@ function renderPage() {
     sectionNode.append(element("h2", "", section.title));
     section.fields.forEach((field) => {
       const control = buildField(field);
+      fieldControls.set(field.id, control.querySelector("input,select,textarea"));
       sectionNode.append(control);
       if (!firstFieldset) firstFieldset = control.querySelector("input,select,textarea");
     });
     form.append(sectionNode);
   });
+  const addressField = project.sections
+    .flatMap((section) => section.fields || [])
+    .find((field) => fieldRole(field) === "address");
+  const cityField = project.sections.flatMap((section) => section.fields || [])
+    .find((field) => fieldRole(field) === "city");
+  const postcodeField = project.sections.flatMap((section) => section.fields || [])
+    .find((field) => fieldRole(field) === "postcode");
+  setupAddressAutocomplete(
+    addressField ? fieldControls.get(addressField.id) : null,
+    cityField ? fieldControls.get(cityField.id) : null,
+    postcodeField ? fieldControls.get(postcodeField.id) : null,
+  );
   if (!project.sections.some((section) => section.type === "schedule")) form.prepend(schedule);
   const summary = element("div", "public-summary");
   const quoteBlock = element("div");

@@ -39,6 +39,14 @@ Public booking is not enabled for an unpublished service. Publishing requires
 verified hours. Booking confirmation also requires configured, valid prices,
 Resend, Turnstile, and a public HTTPS privacy-policy URL.
 
+Street-address fields on public booking pages offer address suggestions after
+three characters are entered. Choosing a result fills the street, city, and
+postal-code fields when those fields exist; customers can always type the
+address manually. Suggestions use the public Photon demo API and OpenStreetMap
+data. Search text is sent to Photon, and the UI displays OpenStreetMap
+attribution. Photon asks users to keep demo-server use reasonable and does not
+guarantee availability; suggestions can be throttled or unavailable.
+
 ## Email delivery with Resend
 
 Confirmed bookings queue a customer confirmation and a separate business
