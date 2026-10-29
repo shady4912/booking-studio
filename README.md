@@ -68,6 +68,19 @@ environment-variable prompts. It does not create a database or deploy the
 service by itself. A private Git repository and access to the Render account
 are required; this workspace currently has no Git repository configured.
 
+### Cloudflare deployment note
+
+The current application is a Node.js server backed by PostgreSQL. Deploying
+with `npx wrangler deploy` and no Worker entry point makes Wrangler treat the
+repository as a static site: it can serve the editor files, but it does not run
+the booking API, PostgreSQL access, admin authentication, or email outbox.
+`.assetsignore` keeps dependencies, server code, and private local data out of
+that static upload and prevents the `node_modules/workerd` asset-size failure;
+it does **not** make the Node backend work on Cloudflare. A real Cloudflare
+deployment requires porting the API to a Worker and replacing the PostgreSQL
+driver with a Cloudflare-compatible database binding such as D1. Do not accept
+real bookings from the static-only deployment.
+
 1. Revoke the exposed Resend key and create a replacement. Do not paste it into
    this repository or chat.
 2. Add this project to a private Git repository under your account and connect

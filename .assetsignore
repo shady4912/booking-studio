@@ -1,0 +1,17 @@
+node_modules/
+.data/
+.git/
+test/
+.DS_Store
+.env
+.env.*
+README.md
+package.json
+package-lock.json
+server.mjs
+bookings.mjs
+database.mjs
+email.mjs
+auth.mjs
+render.yaml
+.node-version
