@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f8fc">
+    <title>Confirm sign-in · Booking Studio</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+      .verify-wrap{min-height:100vh;display:grid;place-items:center;padding:24px}
+      .verify-card{width:min(100%,440px);padding:36px;background:#fff;border:1px solid #e8eaf0;border-radius:20px;box-shadow:0 20px 70px #1f2c4512}
+      .verify-card h1{margin:8px 0;font-size:28px}.verify-card p{color:#697386;line-height:1.55}
+      .verify-card button{width:100%;margin-top:16px}.verify-status{min-height:24px;font-size:14px}
+    </style>
+  </head>
+  <body>
+    <main class="verify-wrap">
+      <section class="verify-card">
+        <span class="eyebrow">CASAHELP WORKSPACE</span>
+        <h1>Confirm your sign-in</h1>
+        <p>This one-time link will sign you in to Booking Studio.</p>
+        <button class="button primary" id="verify-button">Continue to Booking Studio</button>
+        <p class="verify-status" id="verify-status" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+    <script type="module" src="/verify.js"></script>
+  </body>
+</html>

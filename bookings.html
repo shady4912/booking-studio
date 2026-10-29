@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f8fc">
+    <title>Bookings · Booking Studio</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+      .bookings-shell{max-width:1100px;margin:0 auto;padding:32px 22px 72px}
+      .bookings-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}
+      .bookings-heading h1{margin:5px 0;font-size:30px}
+      .bookings-filters{display:flex;align-items:center;gap:12px;margin:20px 0}
+      .bookings-filters select{min-width:min(100%,360px);padding:11px;border:1px solid #dfe3eb;border-radius:9px;font:inherit;background:white}
+      .booking-list{display:grid;gap:14px}.booking-card{background:#fff;border:1px solid #e8eaf0;border-radius:14px;padding:20px}
+      .booking-card-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+      .booking-card h2{margin:0 0 7px;font-size:18px}.booking-meta,.booking-answers{color:#697386;line-height:1.55}
+      .booking-status{display:inline-block;padding:5px 9px;border-radius:20px;background:#effaf4;color:#28633d;font-size:12px;font-weight:700}
+      .booking-status.cancelled{background:#f1f2f5;color:#687386}.booking-answers{margin-top:14px;border-top:1px solid #edf0f4;padding-top:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+      .bookings-message{color:#697386}.booking-list .button{white-space:nowrap}
+      @media(max-width:600px){.bookings-heading,.booking-card-top{align-items:stretch;flex-direction:column}.bookings-filters{align-items:stretch;flex-direction:column}}
+    </style>
+  </head>
+  <body>
+    <main class="bookings-shell">
+      <header class="bookings-heading">
+        <div><span class="eyebrow">CASAHELP WORKSPACE</span><h1>Bookings</h1></div>
+        <a class="button quiet" href="/">Back to editor</a>
+      </header>
+      <label class="bookings-filters">
+        <span>Service</span>
+        <select id="project-select" aria-label="Select service"><option value="">Loading services…</option></select>
+      </label>
+      <p class="bookings-message" id="bookings-status" role="status" aria-live="polite"></p>
+      <section class="booking-list" id="booking-list"></section>
+    </main>
+    <script type="module" src="/bookings.js"></script>
+  </body>
+</html>

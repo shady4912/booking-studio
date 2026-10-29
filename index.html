@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f8fc">
+    <title>Booking Studio · CasaHelp</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div class="announcement"><span class="announcement-dot"></span> Booking Studio · Service editor <span class="announcement-note">Manage and publish customer booking pages</span></div>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Booking Studio home">
+        <span class="brand-mark">c</span>
+        <span><strong>Booking Studio</strong><small>CASAHELP WORKSPACE</small></span>
+      </a>
+      <div class="service-name"><span class="crumb">Services</span><span class="crumb-slash">/</span><strong id="service-name-top">Move In Move Out Cleaning</strong><button class="icon-button rename-button" id="rename-service" aria-label="Rename service">✎</button></div>
+      <div class="top-actions">
+        <span class="save-state" id="save-state"><i></i> Saved on this device</span>
+        <button class="button quiet" id="preview-button">Preview</button>
+        <button class="button quiet" id="settings-button">Settings</button>
+        <a class="button quiet" href="/bookings.html">Bookings</a>
+        <button class="button primary" id="save-button">Save</button>
+        <button class="button publish" id="publish-button">Publish</button>
+        <button class="button quiet share-button" id="share-button">Share</button>
+        <button class="button quiet" id="logout-button" hidden>Sign out</button>
+        <button class="icon-button menu-button" id="more-button" aria-label="More actions">•••</button>
+      </div>
+    </header>
+    <main class="workspace">
+      <aside class="left-sidebar">
+        <div class="sidebar-heading">
+          <div><span class="eyebrow">SERVICE EDITOR</span><h1>Booking page</h1></div>
+          <button class="icon-button" id="sidebar-close" aria-label="Collapse sidebar">‹</button>
+        </div>
+        <div class="sidebar-tabs" role="tablist">
+          <button class="sidebar-tab active" data-tab="sections" role="tab">☷ &nbsp;Sections</button>
+          <button class="sidebar-tab" data-tab="pricing" role="tab">€ &nbsp;Pricing</button>
+          <button class="sidebar-tab" data-tab="appearance" role="tab">◐ &nbsp;Appearance</button>
+        </div>
+        <div class="sidebar-panel" id="sections-panel">
+          <div class="panel-copy"><strong>Build your booking page</strong><p>Arrange your questions and sections. Select any field in the preview to edit it.</p></div>
+          <div id="section-list" class="section-list"></div>
+          <button class="add-section-button" id="add-section"><span>＋</span> Add section</button>
+          <div class="sidebar-footnote">Projects save to your Booking Studio server. Export a JSON backup from the top menu.</div>
+        </div>
+        <div class="sidebar-panel appearance-panel hidden" id="appearance-panel">
+          <div class="panel-copy"><strong>Page appearance</strong><p>Adjust the colors and heading used in the preview.</p></div>
+          <label class="setting-label">Accent color<input id="accent-color" type="color" value="#ffc928"></label>
+          <label class="setting-label">Page background<select id="page-background"><option value="white">White</option><option value="soft">Soft gray</option></select></label>
+          <label class="setting-label">Button style<select id="button-style"><option value="solid">Solid</option><option value="outline">Outline</option></select></label>
+          <button class="button quiet full-width" id="reset-appearance">Reset appearance</button>
+        </div>
+        <div class="sidebar-panel pricing-panel hidden" id="pricing-panel">
+          <div class="panel-copy"><strong>Structured price rules</strong><p>Add only rates supplied by the business. Blank rates stay unpriced.</p></div>
+          <label class="setting-label">Currency<select id="pricing-currency"><option value="EUR">EUR · Euro</option><option value="USD">USD · US dollar</option><option value="GBP">GBP · Pound sterling</option><option value="CHF">CHF · Swiss franc</option></select></label>
+          <label class="setting-label">Base fee<input id="pricing-base-fee" type="number" min="0" max="99999999" step="0.01" placeholder="Leave blank if not configured"></label>
+          <div class="pricing-adjustment">
+            <label class="setting-label">Discount type<select id="pricing-discount-type"><option value="none">No discount</option><option value="fixed">Fixed amount</option><option value="percent">Percentage</option></select></label>
+            <label class="setting-label">Discount value<input id="pricing-discount-value" type="number" min="0" max="100" step="0.01" placeholder="Not configured"></label>
+          </div>
+          <label class="setting-label">Minimum total (optional)<input id="pricing-minimum" type="number" min="0" max="99999999" step="0.01" placeholder="No minimum"></label>
+          <div class="pricing-rules-heading"><strong>Question-based charges</strong><span>Set each rule</span></div>
+          <div id="pricing-fields" class="pricing-fields"></div>
+          <div class="pricing-footnote">Calculation order: base and question charges, discount, then minimum floor. This is a browser preview only; production prices must be calculated on the server.</div>
+        </div>
+      </aside>
+
+      <section class="canvas-area">
+        <div class="canvas-toolbar">
+          <span><span class="live-indicator"></span> PAGE CANVAS</span>
+          <div class="viewport-switch" role="group" aria-label="Preview size">
+            <button class="viewport-button active" data-viewport="desktop" aria-label="Desktop preview">▰</button>
+            <button class="viewport-button" data-viewport="mobile" aria-label="Mobile preview">▯</button>
+          </div>
+        </div>
+        <div class="canvas-scroll">
+          <div id="page-canvas" class="page-canvas">
+            <div class="page-heading">
+              <div class="service-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M6 31h24a7 7 0 0 0 0-14H18"/><path d="m12 25-6 6 6 6M17 14l5 5-5 5M26 12l5 5-5 5M31 9l5 5-5 5"/><path d="M18 39h19"/></svg></div>
+              <div><h2 id="page-title">Move In Move Out Cleaning</h2><p id="page-intro">Book a professional cleaning for your new beginning.</p></div>
+            </div>
+            <div class="editor-hint"><span>⋮⋮</span> Drag sections to reorder · Select a field to edit</div>
+            <div id="page-sections"></div>
+            <button class="canvas-add-section" id="canvas-add-section"><span>＋</span> Add section</button>
+            <div class="book-action"><button id="book-now" class="book-now-button">BOOK NOW</button><p>Secure your preferred appointment time.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="summary-sidebar">
+        <div class="summary-title"><div><span class="eyebrow">LIVE PREVIEW</span><h2>Booking summary</h2></div><span class="preview-pill">PREVIEW</span></div>
+        <div class="summary-service">
+          <span class="summary-service-icon">✦</span>
+          <div><strong id="summary-service-name">Move In Move Out Cleaning</strong><small>Appointment date · Choose a time</small></div>
+        </div>
+        <div id="summary-lines" class="summary-lines"></div>
+        <div class="summary-total"><span>ESTIMATED TOTAL</span><strong id="summary-total">€ 0.00</strong></div>
+        <div class="summary-note"><span>ⓘ</span> No rates are prefilled. Add business-approved rates; this total is a preview only.</div>
+        <button class="summary-continue" id="summary-continue">Continue to schedule <span>→</span></button>
+        <div class="summary-side-note"><span class="lock-icon">♧</span><span>Production confirmations should follow a successfully reserved appointment.</span></div>
+      </aside>
+    </main>
+
+    <dialog id="field-dialog" class="dialog">
+      <form method="dialog" id="field-form">
+        <div class="dialog-heading"><div><span class="eyebrow">FIELD SETTINGS</span><h2 id="field-dialog-title">Edit question</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
+        <input type="hidden" id="field-section-id"><input type="hidden" id="field-id">
+        <label class="setting-label">Question label<input id="field-label" required maxlength="120"></label>
+        <label class="setting-label">Helper text<input id="field-help" maxlength="180" placeholder="Optional short explanation"></label>
+        <label class="setting-label">Field type<select id="field-type"><option value="select">Dropdown</option><option value="number">Number</option><option value="text">Short text</option><option value="textarea">Long text</option><option value="boolean">Yes / no</option><option value="email">Email</option></select></label>
+        <label class="setting-label options-setting">Options <textarea id="field-options" rows="5" placeholder="One option per line"></textarea></label>
+        <div class="two-columns numeric-settings hidden"><label class="setting-label">Minimum<input id="field-min" type="number"></label><label class="setting-label">Maximum<input id="field-max" type="number"></label></div>
+        <label class="check-setting"><input id="field-required" type="checkbox"> Required answer</label>
+        <label class="check-setting"><input id="field-add-on" type="checkbox"> Display as selectable add-on tile</label>
+        <div class="setting-callout">Pricing rules are configured separately in the Pricing tab. No sample prices are applied.</div>
+        <div class="dialog-actions field-dialog-actions"><div class="dialog-destructive-actions"><button class="button quiet" id="field-duplicate" type="button">Duplicate</button><button class="button danger" id="field-delete" type="button">Delete</button></div><div><button class="button quiet" value="cancel">Cancel</button><button class="button primary" id="field-save" value="save">Save field</button></div></div>
+      </form>
+    </dialog>
+
+    <dialog id="section-dialog" class="dialog">
+      <form method="dialog" id="section-form">
+        <div class="dialog-heading"><div><span class="eyebrow">SECTION SETTINGS</span><h2 id="section-dialog-title">Add section</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
+        <input type="hidden" id="section-id">
+        <label class="setting-label">Section title<input id="section-title" required maxlength="100"></label>
+        <label class="setting-label">Section layout<select id="section-type"><option value="questions">Questions</option><option value="addons">Add-on tiles</option></select></label>
+        <div class="dialog-actions"><button class="button danger" id="section-delete" type="button">Delete section</button><div><button class="button quiet" value="cancel">Cancel</button><button class="button primary" id="section-save" value="save">Save section</button></div></div>
+      </form>
+    </dialog>
+
+    <dialog id="settings-dialog" class="dialog">
+      <form method="dialog" id="settings-form">
+        <div class="dialog-heading"><div><span class="eyebrow">PAGE SETTINGS</span><h2>Service details</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
+        <label class="setting-label">Service name<input id="setting-name" required maxlength="100"></label>
+        <label class="setting-label">Page title<input id="setting-title" required maxlength="120"></label>
+        <label class="setting-label">Introduction<textarea id="setting-intro" rows="3" maxlength="220"></textarea></label>
+        <label class="setting-label">URL slug<input id="setting-slug" maxlength="100"></label>
+        <label class="setting-label">Business timezone<input id="setting-timezone" placeholder="Europe/Berlin"></label>
+        <fieldset class="availability-settings">
+          <legend>DEVELOPMENT AVAILABILITY RULES</legend>
+          <p>Example settings only—not CasaHelp's verified service hours. Set actual hours and capacity before testing appointments.</p>
+          <label class="check-setting availability-verified"><input id="availability-verified" type="checkbox"> I verified these hours with the business</label>
+          <div class="availability-numbers">
+            <label class="setting-label">Duration (minutes)<input id="availability-duration" type="number" min="15" max="480" step="15"></label>
+            <label class="setting-label">Buffer (minutes)<input id="availability-buffer" type="number" min="0" max="240" step="15"></label>
+            <label class="setting-label">Capacity per slot<input id="availability-capacity" type="number" min="1" max="100" step="1"></label>
+            <label class="setting-label">Hold minutes<input id="availability-hold" type="number" min="1" max="30" step="1"></label>
+          </div>
+          <div id="working-hours" class="working-hours"></div>
+          <label class="setting-label">Blackout dates<input id="availability-blackouts" placeholder="YYYY-MM-DD, one per line"></label>
+          <small>Appointments are held temporarily and confirmed only after the server checks capacity.</small>
+        </fieldset>
+        <div class="setting-callout">Drafts and test bookings are stored on this computer. No emails, public booking links, payments, or production database are connected.</div>
+        <div class="dialog-actions"><button class="button quiet" value="cancel">Cancel</button><button class="button primary" id="settings-save" value="save">Save settings</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="projects-dialog" class="dialog">
+      <form method="dialog">
+        <div class="dialog-heading"><div><span class="eyebrow">LOCAL PROJECTS</span><h2>Open a saved service page</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
+        <p class="dialog-intro">Projects are stored in your Booking Studio workspace.</p>
+        <div id="projects-list" class="projects-list"></div>
+        <div class="dialog-actions"><button class="button quiet" value="cancel">Close</button><button class="button primary" id="new-project" value="cancel">New project</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="publish-dialog" class="dialog">
+      <form method="dialog">
+        <div class="dialog-heading"><div><span class="eyebrow">PUBLISH CHECK</span><h2>Page is a draft</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
+        <p id="publish-dialog-copy">Your customer booking page is available at the link below.</p>
+        <div class="publish-check"><span>✓</span> Published services have a standalone customer booking page</div>
+        <div class="publish-check warning"><span>!</span> This environment must be configured with production storage, administrator access, verified business hours and rates, Resend, and Turnstile before accepting real bookings. Calendar sync and online payments are not connected.</div>
+        <div class="dialog-actions"><button class="button primary" value="cancel">Got it</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="booking-confirmation-dialog" class="dialog">
+      <form method="dialog">
+        <div class="dialog-heading"><div><span class="eyebrow">TEST BOOKING RESERVED</span><h2>Appointment confirmed</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
+        <p id="booking-confirmation-copy"></p>
+        <div class="publish-check"><span>✓</span> The appointment and quote snapshot were saved by the booking server.</div>
+        <div class="publish-check warning"><span>!</span> Email notifications are queued only when Resend is configured. Keep business availability in sync manually; no external calendar is connected.</div>
+        <div class="dialog-actions"><button class="button primary" value="cancel">Done</button></div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <input type="file" id="import-file" accept="application/json" hidden>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

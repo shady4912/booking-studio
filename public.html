@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f8fc">
+    <title>Book a service · CasaHelp</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+      body{background:#f7f8fc;color:#20283a}.public-shell{max-width:900px;margin:0 auto;padding:40px 22px 72px}
+      .public-brand{font-weight:750;letter-spacing:.02em}.public-card{margin-top:24px;padding:clamp(22px,5vw,46px);background:#fff;border:1px solid #e8eaf0;border-radius:20px;box-shadow:0 18px 60px #1f2c450d}
+      .public-card h1{font-size:clamp(30px,5vw,46px);line-height:1.08;margin:8px 0 12px}.public-intro{color:#697386;line-height:1.6}
+      .public-section{padding:24px 0;border-top:1px solid #edf0f4}.public-section h2{font-size:20px;margin:0 0 18px}
+      .public-field{margin:0 0 18px}.public-field label,.public-field legend{display:block;font-weight:650;margin-bottom:8px}
+      .public-field input,.public-field select,.public-field textarea{box-sizing:border-box;width:100%;padding:12px 13px;border:1px solid #dfe3eb;border-radius:9px;font:inherit;background:white}
+      .public-field input[type=checkbox]{width:auto;padding:0;margin-right:8px}
+      .public-field textarea{min-height:100px;resize:vertical}.public-help{display:block;color:#697386;font-size:13px;margin-top:6px}
+      .public-schedule{display:grid;gap:14px}.public-day h3{margin:0 0 8px;font-size:15px}.public-slots{display:flex;flex-wrap:wrap;gap:8px}
+      .public-slot{border:1px solid #dfe3eb;border-radius:8px;background:#fff;padding:9px 13px;cursor:pointer}.public-slot:hover,.public-slot[aria-pressed=true]{border-color:#b58700;background:#fff5cb}
+      .public-message{color:#697386;line-height:1.5}.public-summary{position:sticky;bottom:0;background:#fff;border:1px solid #e8eaf0;border-radius:14px;padding:17px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:20px;box-shadow:0 8px 32px #1f2c4512}
+      .public-total{font-weight:750;font-size:20px}.public-summary .button{white-space:nowrap}.public-status{min-height:24px;color:#526078}
+      .public-success{padding:24px;background:#effaf4;border:1px solid #cfead8;border-radius:12px}.public-success h2{margin-top:0}
+      .public-error{color:#a12727}.week-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+      @media(max-width:560px){.public-summary{align-items:stretch;flex-direction:column}.public-summary .button{width:100%}}
+    </style>
+  </head>
+  <body>
+    <main class="public-shell">
+      <div class="public-brand">CasaHelp</div>
+      <section class="public-card" id="public-content" aria-live="polite">
+        <p class="public-message">Loading booking page…</p>
+      </section>
+    </main>
+    <script type="module" src="/public.js"></script>
+  </body>
+</html>
