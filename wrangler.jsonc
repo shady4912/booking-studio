@@ -16,7 +16,7 @@
     {
       "binding": "DB",
       "database_name": "booking-studio",
-      "database_id": "00000000-0000-4000-8000-000000000000",
+      "database_id": "2867457a-af4d-4e3f-ae9f-bfe93e07c179",
       "migrations_dir": "migrations"
     }
   ],
