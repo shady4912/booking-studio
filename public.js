@@ -1,4 +1,5 @@
 import { calculatePreviewQuote, formatMoney } from "./pricing.mjs";
+import { collectBookingAnswers } from "./booking-form.mjs";
 
 const root = document.querySelector("#public-content");
 const slug = decodeURIComponent(location.pathname.slice("/book/".length));
@@ -76,7 +77,7 @@ function buildField(field) {
 }
 
 function currentAnswers(form) {
-  return new Map([...new FormData(form)].map(([key, value]) => [key, String(value)]));
+  return collectBookingAnswers(project, new FormData(form));
 }
 
 function refreshQuote(form, totalNode, statusNode, submitButton) {
