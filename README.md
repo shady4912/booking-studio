@@ -81,6 +81,9 @@ are required; this workspace currently has no Git repository configured.
    start`, and `/healthz`. Keep one web instance: the email worker is in-process.
    Choose a paid, always-on web tier before accepting bookings; free instances
    can sleep and are not an appropriate production booking host.
+   The production process intentionally fails startup if required database,
+   sender, administrator, Turnstile, HTTPS origin, or privacy-notice settings
+   are missing or invalid.
 5. In Render's **Environment** settings, enter:
 
    | Variable | Value |
