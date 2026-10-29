@@ -50,14 +50,14 @@ idempotency keys protect retries against duplicate sends.
 1. **Revoke any Resend key that has been shared in chat, tickets, or source
    control.** Create a replacement, and only enter it through your deployment
    host's secret manager. Never put it in a source file or share it in chat.
-2. In Resend, add the recommended sending subdomain
-   `bookings.quantumsoftworks.com`.
+2. In Resend, add a sending subdomain. The configured and verified sender
+   domain for this deployment is `bookings.casahelp.de`.
 3. Resend provides the exact DNS records. Add those records in Hostinger's DNS
-   zone for `quantumsoftworks.com`; do not guess or alter record names/values.
+   zone for `casahelp.de`; do not guess or alter record names/values.
    Wait until Resend shows the sending subdomain as verified. See
    [Resend's domain setup](https://resend.com/docs/add-a-domain).
-4. Set the verified sender, for example
-   `CasaHelp bookings <bookings@bookings.quantumsoftworks.com>`.
+4. Set the verified sender to an address at the exact verified subdomain:
+   `CasaHelp bookings <bookings@bookings.casahelp.de>`.
 
 ## Prepare Render
 
@@ -116,7 +116,9 @@ current limits and account requirements before launch.
    npx wrangler secret put TURNSTILE_SECRET_KEY
    ```
 
-   Each command prompts securely for its value. Update `RESEND_FROM`,
+   Use the variable names exactly as shown in the commands, then enter each
+   secret value only at Wrangler's interactive prompt. Never use a key value as
+   the variable name or put it in a command argument. Update `RESEND_FROM`,
    `TURNSTILE_SITE_KEY`, and `PRIVACY_POLICY_URL` in the Worker's variables.
    Review `ADMIN_EMAILS` and `BOOKING_NOTIFICATION_EMAILS` in `wrangler.jsonc`
    and change them if needed.
@@ -175,7 +177,7 @@ deployment path. The Render deployment steps are:
    | `BOOKING_ADMIN_EMAILS` | `sadyslim49@gmail.com,casaHelp.office@gmail.com` |
    | `BOOKING_NOTIFICATION_EMAILS` | `sadyslim49@gmail.com,casaHelp.office@gmail.com` |
    | `RESEND_API_KEY` | Replacement key, entered only in Render |
-   | `RESEND_FROM` | Verified sender on `bookings.quantumsoftworks.com` |
+   | `RESEND_FROM` | Verified sender on `bookings.casahelp.de` |
    | `TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key for the Render hostname |
    | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret, entered only in Render |
    | `PRIVACY_POLICY_URL` | Public HTTPS URL to the business's actual privacy notice |
