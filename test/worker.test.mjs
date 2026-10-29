@@ -139,6 +139,7 @@ test("Durable Object serializes holds for a project's capacity", async () => {
     body: JSON.stringify({ action: "availability", payload: { from: monday, days: 1 } }),
   })).then((response) => response.json());
   assert.equal(availability.slots.length, 2);
+  assert.ok(availability.slots.every((slot) => slot.date === monday));
 
   const [first, second] = await Promise.all([
     object.fetch(new Request("https://object.test", {

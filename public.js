@@ -193,8 +193,8 @@ async function renderAvailability(container, statusNode, form, totalNode, submit
     if (sequence !== availabilitySequence) return;
     const groups = new Map();
     result.slots.forEach((slot) => {
-      if (!groups.has(slot.localDate)) groups.set(slot.localDate, []);
-      groups.get(slot.localDate).push(slot);
+      if (!groups.has(slot.date)) groups.set(slot.date, []);
+      groups.get(slot.date).push(slot);
     });
     if (!groups.size) {
       container.append(element("p", "public-message", "No appointments are available this week. Try another week."));
