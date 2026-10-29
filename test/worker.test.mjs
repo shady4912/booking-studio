@@ -103,6 +103,29 @@ test("Worker protects studio APIs and returns a controlled public not-found", as
   assert.match((await publicResponse.json()).error, /not available/);
 });
 
+test("Worker serves a published booking shell without redirecting away from its slug URL", async () => {
+  const project = makeProject();
+  project.service.slug = "worker-test-service";
+  project.service.published = true;
+  const assetRequests = [];
+  const response = await worker.fetch(
+    new Request("https://studio.example/book/worker-test-service"),
+    {
+      DB: memoryDatabase(project),
+      ASSETS: {
+        async fetch(request) {
+          assetRequests.push(new URL(request.url));
+          return new Response("booking shell");
+        },
+      },
+    },
+  );
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), "booking shell");
+  assert.equal(assetRequests.length, 1);
+  assert.equal(assetRequests[0].pathname, "/public");
+});
+
 test("Durable Object serializes holds for a project's capacity", async () => {
   const project = makeProject();
   const object = new BookingProjectObject(

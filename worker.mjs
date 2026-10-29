@@ -575,7 +575,7 @@ async function staticResponse(request, env, url) {
   if (publicPage) {
     const project = await getPublishedProject(env, publicPage[1]);
     if (!project) return new Response("Booking page not found.", { status: 404 });
-    return env.ASSETS.fetch(new Request(new URL("/public.html", url), request));
+    return env.ASSETS.fetch(new Request(new URL("/public", url), request));
   }
   if (path === "/" || path === "/index.html" || path === "/bookings.html") {
     if (!await sessionEmail(request, env)) {
