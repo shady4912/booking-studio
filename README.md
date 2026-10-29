@@ -1,8 +1,8 @@
 # CasaHelp Booking Studio
 
-Booking Studio is a local-first service editor with an optional Render/PostgreSQL
-deployment path. It is separate from the Cost Calculator Builder WordPress
-plugin.
+Booking Studio is a service editor with a Cloudflare Workers/D1 deployment
+path and an optional Render/PostgreSQL alternative. It is separate from the
+Cost Calculator Builder WordPress plugin.
 
 ## Run locally
 
@@ -36,9 +36,8 @@ Run the automated checks with `npm test`.
    appointment. A cancellation queues customer and business email notices.
 
 Public booking is not enabled for an unpublished service. Publishing requires
-verified hours. Booking confirmation also requires configured, valid prices.
-The deployment refuses to start without production database, email, anti-bot,
-administrator, canonical URL, and privacy-policy settings.
+verified hours. Booking confirmation also requires configured, valid prices,
+Resend, Turnstile, and a public HTTPS privacy-policy URL.
 
 ## Email delivery with Resend
 
@@ -49,9 +48,8 @@ after eight failed attempts they are marked failed and logged. Resend
 idempotency keys protect retries against duplicate sends.
 
 1. **Revoke any Resend key that has been shared in chat, tickets, or source
-   control.** Create a replacement, and only enter it directly in Render's
-   secret Environment setting. Never put it in a source file or share it in
-   chat.
+   control.** Create a replacement, and only enter it through your deployment
+   host's secret manager. Never put it in a source file or share it in chat.
 2. In Resend, add the recommended sending subdomain
    `bookings.quantumsoftworks.com`.
 3. Resend provides the exact DNS records. Add those records in Hostinger's DNS
@@ -65,38 +63,107 @@ idempotency keys protect retries against duplicate sends.
 
 `render.yaml` defines a single-instance Node web service, health check, and
 environment-variable prompts. It does not create a database or deploy the
-service by itself. A private Git repository and access to the Render account
-are required; this workspace currently has no Git repository configured.
+service by itself. A private Git repository and access to a Render account are
+required.
 
-### Cloudflare deployment note
+### Cloudflare Workers deployment
 
-The current application is a Node.js server backed by PostgreSQL. Deploying
-with `npx wrangler deploy` and no Worker entry point makes Wrangler treat the
-repository as a static site: it can serve the editor files, but it does not run
-the booking API, PostgreSQL access, admin authentication, or email outbox.
-`.assetsignore` keeps dependencies, server code, and private local data out of
-that static upload and prevents the `node_modules/workerd` asset-size failure;
-it does **not** make the Node backend work on Cloudflare. A real Cloudflare
-deployment requires porting the API to a Worker and replacing the PostgreSQL
-driver with a Cloudflare-compatible database binding such as D1. Do not accept
-real bookings from the static-only deployment.
+The Cloudflare backend uses a Worker for the API, D1 for projects and booking
+records, and one Durable Object per project to serialize booking holds and
+confirmations across requests. A scheduled Worker retries the email outbox.
+`.assetsignore` keeps backend code, migrations, dependencies, and local data
+out of the static asset upload. This is a real API deployment, not a
+static-only editor. The Cloudflare Free plan has usage limits; review the
+current limits and account requirements before launch.
+
+1. **Rotate the exposed Resend key.** Revoke any key previously shared in chat
+   or source control. Create a replacement, and only enter it through
+   Cloudflare's secret prompt. Never paste it into a file or chat.
+2. From the repository root, create a D1 database:
+
+   ```sh
+   npx wrangler d1 create booking-studio
+   ```
+
+   Copy the returned database ID into `database_id` in `wrangler.jsonc`. Keep
+   the configured database name `booking-studio`.
+3. Apply the database schema:
+
+   ```sh
+   npx wrangler d1 migrations apply booking-studio --remote
+   ```
+
+4. Make the initial Worker deployment to create its `workers.dev` hostname.
+   At this point booking confirmation and email sign-in remain disabled because
+   the required secrets and Turnstile settings are not configured:
+
+   ```sh
+   npm ci
+   npm run deploy:cloudflare
+   ```
+
+5. Create a Turnstile widget, add the exact Worker hostname to its allowed
+   hostnames, and set its site key in `TURNSTILE_SITE_KEY` in `wrangler.jsonc`
+   or the Worker's Variables and Secrets settings.
+6. In Resend, verify your sending domain and use its actual sender address in
+   `RESEND_FROM`. Add the exact DNS records Resend provides to the
+   `quantumsoftworks.com` DNS zone; do not guess record values. Set a real,
+   publicly accessible HTTPS privacy notice in `PRIVACY_POLICY_URL`.
+7. Add the secrets without putting values in shell history or the repository:
+
+   ```sh
+   npx wrangler secret put RESEND_API_KEY
+   npx wrangler secret put TURNSTILE_SECRET_KEY
+   ```
+
+   Each command prompts securely for its value. Update `RESEND_FROM`,
+   `TURNSTILE_SITE_KEY`, and `PRIVACY_POLICY_URL` in the Worker's variables.
+   Review `ADMIN_EMAILS` and `BOOKING_NOTIFICATION_EMAILS` in `wrangler.jsonc`
+   and change them if needed.
+8. Deploy the finished configuration from the repository root:
+
+   ```sh
+   npm run deploy:cloudflare
+   ```
+
+   For Cloudflare Workers Builds, use `npm ci` as the build command and
+   `npm run deploy:cloudflare` as the deploy command. Do not use the old
+   auto-detected static-site command `npx wrangler deploy` without this checked
+   in Worker configuration.
+9. Before accepting bookings, verify `/healthz`, administrator magic-link
+   delivery and sign-in, project save/publish, Turnstile, a complete test
+   booking, confirmation and cancellation emails, and a second booking attempt
+   for the same slot. Review Worker logs and Cloudflare D1 usage. Import only
+   service projects you intend to publish; local `.data` files are not deployed.
+
+For local Worker development, apply migrations to Wrangler's local D1 database
+with `npx wrangler d1 migrations apply booking-studio --local`, then run
+`npm run dev:cloudflare`. `npm run test:cloudflare` performs a Wrangler deploy
+dry run; it does not deploy or verify live secrets.
+
+The Worker fails closed on public booking confirmation when Resend, Turnstile,
+or the privacy notice is not configured. Admin magic-link sign-in also requires
+Resend. Do not accept real bookings until production setup and end-to-end
+testing are complete.
+
+### Render alternative
+
+`render.yaml` remains available for a Node/PostgreSQL host. Render setup needs
+an account and may require a payment method; Cloudflare setup is a separate
+deployment path. The Render deployment steps are:
 
 1. Revoke the exposed Resend key and create a replacement. Do not paste it into
    this repository or chat.
-2. Add this project to a private Git repository under your account and connect
-   that repository to Render. Review the files and backups first; do not upload
-   customer booking data.
+2. Connect the private Git repository to Render. Review the files and backups
+   first; do not upload customer booking data.
 3. Create a Render PostgreSQL database in the same region as the web service.
-   Choose a paid persistent database tier suitable for production and set its
+   Choose a persistent database tier suitable for production and set its
    internal connection string as `DATABASE_URL`. Render Postgres setup is
    covered in [Render's database docs](https://render.com/docs/databases).
 4. Create the web service from `render.yaml`. The app uses `npm ci`, `npm
    start`, and `/healthz`. Keep one web instance: the email worker is in-process.
-   Choose a paid, always-on web tier before accepting bookings; free instances
-   can sleep and are not an appropriate production booking host.
-   The production process intentionally fails startup if required database,
-   sender, administrator, Turnstile, HTTPS origin, or privacy-notice settings
-   are missing or invalid.
+   Choose an always-on web tier before accepting bookings; free instances can
+   sleep and are not an appropriate production booking host.
 5. In Render's **Environment** settings, enter:
 
    | Variable | Value |
@@ -124,10 +191,11 @@ real bookings from the static-only deployment.
    projects you intend to publish.
 
 The two addresses above are configured both as administrators and as booking
-notification recipients. Studio access uses one-time Resend email links,
-10-minute magic-link expiry, hashed tokens in PostgreSQL, and secure HTTP-only
-session cookies. Project and booking-management APIs require administrator
-sign-in. Public service data and booking endpoints are deliberately separate.
+notification recipients in the default configuration. Studio access uses
+one-time Resend email links, 10-minute magic-link expiry, hashed tokens, and
+secure HTTP-only session cookies. Project and booking-management APIs require
+administrator sign-in. Public service data and booking endpoints are
+deliberately separate.
 
 ## Production limitations and launch checks
 

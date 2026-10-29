@@ -1,0 +1,47 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "booking-studio",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-29",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "booking-studio",
+      "database_id": "00000000-0000-4000-8000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "BOOKING_OBJECTS",
+        "class_name": "BookingProjectObject"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["BookingProjectObject"]
+    }
+  ],
+  "triggers": {
+    "crons": ["* * * * *"]
+  },
+  "vars": {
+    "ADMIN_EMAILS": "sadyslim49@gmail.com,casaHelp.office@gmail.com",
+    "BOOKING_NOTIFICATION_EMAILS": "sadyslim49@gmail.com,casaHelp.office@gmail.com",
+    "RESEND_FROM": "CasaHelp bookings <bookings@bookings.quantumsoftworks.com>",
+    "TURNSTILE_SITE_KEY": "",
+    "PRIVACY_POLICY_URL": ""
+  }
+}
