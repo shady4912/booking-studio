@@ -86,6 +86,20 @@ async function hashToken(token) {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+async function matchesPassword(candidate, configured) {
+  const [candidateDigest, configuredDigest] = await Promise.all([
+    crypto.subtle.digest("SHA-256", textEncoder.encode(candidate)),
+    crypto.subtle.digest("SHA-256", textEncoder.encode(configured)),
+  ]);
+  const candidateBytes = new Uint8Array(candidateDigest);
+  const configuredBytes = new Uint8Array(configuredDigest);
+  let difference = 0;
+  for (let index = 0; index < candidateBytes.length; index += 1) {
+    difference |= candidateBytes[index] ^ configuredBytes[index];
+  }
+  return difference === 0;
+}
+
 function parseAdminEmails(value) {
   const emails = value.split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
   if (emails.some((email) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
@@ -309,6 +323,41 @@ async function authRoute(request, env, url) {
   if (path === "/api/auth/me" && request.method === "GET") {
     const email = await sessionEmail(request, env);
     return jsonResponse({ authenticated: Boolean(email), email });
+  }
+  if (path === "/api/auth/login" && request.method === "POST") {
+    checkOrigin(request);
+    requireJson(request);
+    const body = await readJson(request);
+    const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+    const password = typeof body?.password === "string" ? body.password : "";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 ||
+      password.length === 0 || password.length > 1024) {
+      throw new BookingError(401, "Email or password is incorrect.");
+    }
+
+    await enforceRateLimit(env, "password-login-email", email, 8, 15 * 60 * 1000);
+    await enforceRateLimit(env, "password-login-ip", request.headers.get("cf-connecting-ip"), 25, 15 * 60 * 1000);
+    if (!env.ADMIN_PASSWORD) {
+      throw Object.assign(new Error("Password sign-in is not configured. Contact the administrator."), { status: 503 });
+    }
+    const passwordMatches = await matchesPassword(password, env.ADMIN_PASSWORD);
+    if (!passwordMatches || !adminEmails(env).includes(email)) {
+      throw new BookingError(401, "Email or password is incorrect.");
+    }
+
+    const sessionToken = randomToken();
+    const now = Date.now();
+    await env.DB.prepare(`
+      INSERT INTO admin_sessions (token_hash, email, expires_at, created_at) VALUES (?, ?, ?, ?)
+    `).bind(
+      await hashToken(sessionToken),
+      email,
+      now + sessionLifetime,
+      now,
+    ).run();
+    return jsonResponse({ ok: true }, 200, {
+      "Set-Cookie": `${sessionCookieName}=${sessionToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${sessionLifetime / 1000}`,
+    });
   }
   if (path === "/api/auth/request-link" && request.method === "POST") {
     requireJson(request);

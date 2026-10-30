@@ -102,8 +102,8 @@ current limits and account requirements before launch.
    ```
 
 4. Make the initial Worker deployment to create its `workers.dev` hostname.
-   At this point booking confirmation and email sign-in remain disabled because
-   the required secrets and Turnstile settings are not configured:
+   At this point booking confirmation and administrator sign-in remain disabled
+   because the required secrets and Turnstile settings are not configured:
 
    ```sh
    npm ci
@@ -122,14 +122,18 @@ current limits and account requirements before launch.
    ```sh
    npx wrangler secret put RESEND_API_KEY
    npx wrangler secret put TURNSTILE_SECRET_KEY
+   npx wrangler secret put ADMIN_PASSWORD
    ```
 
    Use the variable names exactly as shown in the commands, then enter each
-   secret value only at Wrangler's interactive prompt. Never use a key value as
-   the variable name or put it in a command argument. Update `RESEND_FROM`,
-   `TURNSTILE_SITE_KEY`, and `PRIVACY_POLICY_URL` in the Worker's variables.
-   Review `ADMIN_EMAILS` and `BOOKING_NOTIFICATION_EMAILS` in `wrangler.jsonc`
-   and change them if needed.
+   secret value only at Wrangler's interactive prompt. Choose a unique password
+   of at least 16 characters for `ADMIN_PASSWORD`; do not put it in chat, source
+   control, shell arguments, or shell history. All authorized administrator
+   email addresses use this password. Repeat the command to rotate it. Never
+   use a key value as a secret name. Update `RESEND_FROM`, `TURNSTILE_SITE_KEY`,
+   and `PRIVACY_POLICY_URL` in the Worker's variables. Review `ADMIN_EMAILS`
+   and `BOOKING_NOTIFICATION_EMAILS` in `wrangler.jsonc` and change them if
+   needed.
 8. Deploy the finished configuration from the repository root:
 
    ```sh
@@ -140,11 +144,12 @@ current limits and account requirements before launch.
    `npm run deploy:cloudflare` as the deploy command. Do not use the old
    auto-detected static-site command `npx wrangler deploy` without this checked
    in Worker configuration.
-9. Before accepting bookings, verify `/healthz`, administrator magic-link
-   delivery and sign-in, project save/publish, Turnstile, a complete test
-   booking, confirmation and cancellation emails, and a second booking attempt
-   for the same slot. Review Worker logs and Cloudflare D1 usage. Import only
-   service projects you intend to publish; local `.data` files are not deployed.
+9. Before accepting bookings, verify `/healthz`, administrator password
+   sign-in (and optional email-link fallback), project save/publish, Turnstile,
+   a complete test booking, confirmation and cancellation emails, and a second
+   booking attempt for the same slot. Review Worker logs and Cloudflare D1
+   usage. Import only service projects you intend to publish; local `.data`
+   files are not deployed.
 
 For local Worker development, apply migrations to Wrangler's local D1 database
 with `npx wrangler d1 migrations apply booking-studio --local`, then run
@@ -152,9 +157,10 @@ with `npx wrangler d1 migrations apply booking-studio --local`, then run
 dry run; it does not deploy or verify live secrets.
 
 The Worker fails closed on public booking confirmation when Resend, Turnstile,
-or the privacy notice is not configured. Admin magic-link sign-in also requires
-Resend. Do not accept real bookings until production setup and end-to-end
-testing are complete.
+or the privacy notice is not configured. Password sign-in requires the
+`ADMIN_PASSWORD` secret; the optional email-link fallback requires Resend. Do
+not accept real bookings until production setup and end-to-end testing are
+complete.
 
 ### Render alternative
 
@@ -201,11 +207,13 @@ deployment path. The Render deployment steps are:
    projects you intend to publish.
 
 The two addresses above are configured both as administrators and as booking
-notification recipients in the default configuration. Studio access uses
-one-time Resend email links, 10-minute magic-link expiry, hashed tokens, and
-secure HTTP-only session cookies. Project and booking-management APIs require
-administrator sign-in. Public service data and booking endpoints are
-deliberately separate.
+notification recipients in the default configuration. Studio sign-in uses
+those authorized emails with the `ADMIN_PASSWORD` Worker secret, plus a
+seven-day secure HTTP-only session cookie. Login attempts are rate limited.
+The login page also offers one-time Resend email links as a fallback; links
+expire after 10 minutes and use hashed tokens. Project and booking-management
+APIs require administrator sign-in. Public service data and booking endpoints
+are deliberately separate.
 
 ## Production limitations and launch checks
 

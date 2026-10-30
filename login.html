@@ -20,12 +20,15 @@
       <section class="login-card">
         <span class="eyebrow">CASAHELP WORKSPACE</span>
         <h1>Sign in to Booking Studio</h1>
-        <p>Enter an authorized administrator email and we’ll send you a secure sign-in link.</p>
+        <p>Sign in with an authorized administrator email and password.</p>
         <form id="login-form">
           <label for="email">Administrator email</label>
           <input id="email" name="email" type="email" autocomplete="email" required maxlength="254">
-          <button class="button primary" type="submit">Email me a sign-in link</button>
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="1024">
+          <button class="button primary" type="submit">Sign in</button>
         </form>
+        <button class="button" id="email-link-toggle" type="button">Use an email sign-in link instead</button>
         <p class="login-status" id="login-status" role="status" aria-live="polite"></p>
       </section>
     </main>
